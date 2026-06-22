@@ -20,7 +20,8 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   GoogleAuthProvider, 
-  signInWithPopup 
+  signInWithPopup,
+  browserPopupBlockedHandler
 } from 'firebase/auth';
 import Link from 'next/link';
 
@@ -50,6 +51,8 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
+    
     setIsLoading(true);
     setError('');
 
@@ -62,35 +65,47 @@ export default function LoginPage() {
       router.push('/admin');
     } catch (err: any) {
       console.error("Auth Error:", err);
-      if (err.code === 'auth/operation-not-allowed') {
-        setError('El método de inicio de sesión no está habilitado en Firebase. Actívalo en Authentication > Sign-in method.');
-      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-email' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+      const code = err?.code || '';
+      
+      if (code === 'auth/operation-not-allowed') {
+        setError('El método de inicio de sesión no está habilitado en Firebase. Actívalo en la consola.');
+      } else if (code === 'auth/invalid-credential' || code === 'auth/invalid-email' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
         setError('Las credenciales son incorrectas o el usuario no existe.');
-      } else if (err.code === 'auth/email-already-in-use') {
+      } else if (code === 'auth/email-already-in-use') {
         setError('Este correo ya está registrado.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('La contraseña es demasiado débil.');
+      } else if (code === 'auth/weak-password') {
+        setError('La contraseña es demasiado débil (mínimo 6 caracteres).');
+      } else if (code === 'auth/too-many-requests') {
+        setError('Demasiados intentos fallidos. Intenta más tarde.');
       } else {
-        setError('Ocurrió un error en la autenticación. Intenta de nuevo.');
+        setError(err?.message || 'Ocurrió un error en la autenticación. Intenta de nuevo.');
       }
       setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    if (!auth) return;
+    
     setIsGoogleLoading(true);
     setError('');
     const provider = new GoogleAuthProvider();
+    
     try {
-      if (!auth) throw new Error("Firebase Auth no inicializado");
       await signInWithPopup(auth, provider);
       router.push('/admin');
     } catch (err: any) {
       console.error("Google Auth Error:", err);
-      if (err.code === 'auth/operation-not-allowed') {
-        setError('El proveedor de Google no está habilitado en Firebase. Actívalo en la consola.');
+      const code = err?.code || '';
+      
+      if (code === 'auth/popup-blocked') {
+        setError('El navegador bloqueó la ventana emergente. Por favor, permite los popups para este sitio.');
+      } else if (code === 'auth/cancelled-popup-request') {
+        setError('Operación cancelada.');
+      } else if (code === 'auth/operation-not-allowed') {
+        setError('El proveedor de Google no está habilitado en Firebase.');
       } else {
-        setError('No se pudo iniciar sesión con Google.');
+        setError('No se pudo iniciar sesión con Google. Intenta con correo y contraseña.');
       }
       setIsGoogleLoading(false);
     }
@@ -194,14 +209,6 @@ export default function LoginPage() {
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
                     <div className="space-y-2">
                       <AlertDescription className="text-[10px] font-medium leading-relaxed">{error}</AlertDescription>
-                      {error.includes('consola de Firebase') && (
-                        <div className="flex items-start gap-2 pt-2 border-t border-destructive/10">
-                          <Info className="h-3 w-3 text-destructive/60 mt-0.5" />
-                          <p className="text-[9px] text-destructive/60 leading-tight">
-                            Ve a Authentication &gt; Sign-in method y habilita el proveedor correspondiente en tu consola de Firebase.
-                          </p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </Alert>

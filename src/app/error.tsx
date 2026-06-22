@@ -21,8 +21,9 @@ export default function GlobalError({
     console.error('Next.js Global Error Boundary:', error);
   }, [error]);
 
-  const isPermissionError = error.message.toLowerCase().includes('permission') || 
-                           error.message.toLowerCase().includes('insufficient');
+  const errorMessage = error?.message || '';
+  const isPermissionError = errorMessage.toLowerCase().includes('permission') || 
+                           errorMessage.toLowerCase().includes('insufficient');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
@@ -47,7 +48,7 @@ export default function GlobalError({
 
           <div className="p-6 bg-muted/30 rounded-sm text-[10px] font-mono text-left overflow-auto max-h-40 border border-border/40">
             <span className="text-primary font-bold uppercase block mb-2">Error log:</span>
-            {error.message || 'Error desconocido'}
+            {errorMessage || 'Error desconocido o nulo'}
           </div>
         </div>
 
