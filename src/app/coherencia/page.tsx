@@ -1,10 +1,9 @@
-
 "use client";
 
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, Award, GraduationCap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Award, GraduationCap, ShieldCheck } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function CoherenciaPage() {
@@ -26,8 +25,8 @@ export default function CoherenciaPage() {
           <span className="text-primary font-bold tracking-[0.5em] uppercase text-[10px] mb-8 block animate-in slide-in-from-bottom-4 duration-700">Capítulo 05</span>
           <div className="max-w-4xl animate-in slide-in-from-bottom-8 duration-1000">
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold font-headline leading-[0.9] mb-8 tracking-tighter text-white">
-              Formación & <br />
-              <span className="italic font-normal text-primary">Propósito.</span>
+              Integridad & <br />
+              <span className="italic font-normal text-primary">Coherencia.</span>
             </h1>
           </div>
         </div>
@@ -38,10 +37,13 @@ export default function CoherenciaPage() {
           <div className="lg:col-span-8 space-y-24">
             <div className="space-y-12">
               <div className="flex items-center gap-4">
-                <GraduationCap className="h-6 w-6 text-primary" />
+                <ShieldCheck className="h-6 w-6 text-primary" />
                 <span className="text-primary font-bold text-[10px] tracking-[0.4em] uppercase">05</span>
               </div>
-              <h3 className="text-3xl font-bold font-headline tracking-tighter">Formación</h3>
+              <h3 className="text-3xl font-bold font-headline tracking-tighter">Maquillaje o Verdad</h3>
+              <p className="text-xl font-light text-foreground/70 leading-relaxed italic">
+                La integridad organizacional no es una opción estética, es el único valor innegociable que garantiza la sostenibilidad a largo plazo.
+              </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
                 <div className="space-y-6">
@@ -68,9 +70,9 @@ export default function CoherenciaPage() {
             </div>
 
             <div className="pt-24 border-t space-y-12">
-              <h3 className="text-3xl font-bold font-headline tracking-tighter">Sobre The Other Narrative</h3>
+              <h3 className="text-3xl font-bold font-headline tracking-tighter">Cierre de la Bitácora</h3>
               <p className="text-lg font-light text-foreground/70 leading-relaxed max-w-2xl">
-                The Other Narrative es un laboratorio estratégico y editorial que trabaja en la intersección entre comunicación, sostenibilidad y construcción de confianza. Acompañamos organizaciones que buscan fortalecer sus narrativas, movilizar comunidades y generar conversaciones relevantes para el futuro.
+                The Other Narrative cierra este recorrido recordando que la comunicación no es el punto de llegada, sino el puente constante entre lo que somos y lo que hacemos. Nuestra misión es habitar esa verdad junto a las organizaciones que deciden ser coherentes.
               </p>
             </div>
           </div>
@@ -80,10 +82,10 @@ export default function CoherenciaPage() {
               <Award className="h-6 w-6 text-primary" />
               <h4 className="text-sm font-bold uppercase tracking-widest">Impacto</h4>
               <p className="text-xs font-light text-muted-foreground leading-relaxed">
-                Transformamos conocimiento en productos de alto valor que generan comprensión y acción real a través de la palabra y la estrategia.
+                Transformamos la teoría en práctica operativa a través de la formación estratégica y el acompañamiento técnico.
               </p>
               <Link href="/contacto" className="btn-editorial w-full bg-secondary text-white hover:bg-primary border-0 h-10">
-                Conversemos <ArrowRight className="ml-3 h-3 w-3" />
+                Finalizar Recorrido <ArrowRight className="ml-3 h-3 w-3" />
               </Link>
             </div>
           </aside>
@@ -93,8 +95,8 @@ export default function CoherenciaPage() {
           <Link href="/resonancia" className="btn-editorial btn-editorial-outline group">
             <ArrowLeft className="mr-4 h-4 w-4 group-hover:-translate-x-1 transition-transform" /> 04 Resonancia
           </Link>
-          <Link href="/contacto" className="btn-editorial btn-editorial-primary">
-            Contacto <ArrowRight className="ml-4 h-4 w-4" />
+          <Link href="/blog" className="btn-editorial btn-editorial-primary">
+            Bitácora Abierta <ArrowRight className="ml-4 h-4 w-4" />
           </Link>
         </div>
       </div>

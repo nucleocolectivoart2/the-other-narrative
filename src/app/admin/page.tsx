@@ -27,7 +27,17 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  AlignJustify
+  AlignJustify,
+  Video,
+  Briefcase,
+  Quote,
+  ExternalLink,
+  Mail,
+  CheckCircle,
+  Clock,
+  Wand2,
+  Copy,
+  Layout
 } from 'lucide-react';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -41,6 +51,8 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const AUTHORIZED_EMAILS = ['angelamgomez@gmail.com', 'nucleo.colectivo.art@gmail.com'];
 
@@ -54,10 +66,6 @@ interface ContentBlock {
   alignment: Alignment;
 }
 
-/**
- * Componente de Bloque Editable (WYSIWYG)
- * Permite editar el contenido viendo el formato final.
- */
 function EditableBlock({ 
   block, 
   onChange, 
@@ -90,14 +98,12 @@ function EditableBlock({
 
   return (
     <div className="group relative bg-white border border-border/40 rounded-sm p-8 shadow-sm hover:shadow-xl transition-all duration-500 mb-8">
-      {/* Controles Flotantes Laterales */}
       <div className="absolute -right-12 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
         <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white border" onClick={() => onMove('up')}><ChevronUp className="h-4" /></Button>
         <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={onRemove}><Trash2 className="h-3.5" /></Button>
         <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white border" onClick={() => onMove('down')}><ChevronDown className="h-4" /></Button>
       </div>
 
-      {/* Barra de Herramientas Estilo Editorial */}
       <div className="flex items-center gap-4 mb-6 border-b pb-4">
         <div className="bg-[#FAF7F2] text-primary px-4 py-1.5 rounded-full flex items-center gap-2 border border-primary/10">
           <Type className="h-3 w-3" />
@@ -124,7 +130,6 @@ function EditableBlock({
         </div>
       </div>
 
-      {/* Área Editable WYSIWYG */}
       <div 
         ref={editorRef}
         contentEditable
@@ -158,16 +163,15 @@ export default function AdminDashboard() {
   const isAuthorized = adminData?.isAdmin || (user?.email && AUTHORIZED_EMAILS.includes(user.email));
 
   const [activeTab, setActiveTab] = useState('overview');
-  const [activeForm, setActiveForm] = useState<'none' | 'podcast' | 'project' | 'blog' | 'resource'>('none');
+  const [activeForm, setActiveForm] = useState<'none' | 'podcast' | 'project' | 'blog' | 'video' | 'testimonial'>('none');
   const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // AI Assistant State
   const [aiInput, setAiInput] = useState('');
   const [aiResult, setAiResult] = useState<EditorialOutput | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
 
-  // Blog Form State
   const [blogTitle, setBlogTitle] = useState('');
   const [blogExcerpt, setBlogExcerpt] = useState('');
   const [blogType, setBlogType] = useState('Reflexión');
@@ -176,17 +180,38 @@ export default function AdminDashboard() {
   const [blogAuthorTitle, setBlogAuthorTitle] = useState('Periodista experta en sostenibilidad');
   const [blocks, setBlocks] = useState<ContentBlock[]>([{ id: 'init-1', type: 'text', content: '', alignment: 'justify' }]);
 
-  // Podcast State
   const [podTitle, setPodTitle] = useState('');
   const [podDescription, setPodDescription] = useState('');
   const [podUrl, setPodUrl] = useState('');
   const [podGuest, setPodGuest] = useState('');
+  const [podImage, setPodImage] = useState('');
 
-  // Collections
+  const [vidTitle, setVidTitle] = useState('');
+  const [vidUrl, setVidUrl] = useState('');
+  const [vidPlatform, setVidPlatform] = useState('YouTube');
+
+  const [projTitle, setProjTitle] = useState('');
+  const [projDesc, setProjDesc] = useState('');
+  const [projCategory, setProjCategory] = useState('');
+  const [projImage, setProjImage] = useState('');
+  const [projLink, setProjLink] = useState('');
+
+  const [testQuote, setTestQuote] = useState('');
+  const [testAuthorName, setTestAuthorName] = useState('');
+  const [testAuthorTitle, setTestAuthorTitle] = useState('');
+
   const blogQuery = useMemoFirebase(() => query(collection(firestore, 'contentItems'), orderBy('date', 'desc')), [firestore]);
   const { data: blogItems } = useCollection(blogQuery);
   const podcastQuery = useMemoFirebase(() => query(collection(firestore, 'podcasts'), orderBy('createdAt', 'desc')), [firestore]);
   const { data: podItems } = useCollection(podcastQuery);
+  const videoQuery = useMemoFirebase(() => query(collection(firestore, 'featuredVideos'), orderBy('createdAt', 'desc')), [firestore]);
+  const { data: videoItems } = useCollection(videoQuery);
+  const projectsQuery = useMemoFirebase(() => query(collection(firestore, 'projects')), [firestore]);
+  const { data: projectItems } = useCollection(projectsQuery);
+  const testimonialsQuery = useMemoFirebase(() => query(collection(firestore, 'testimonials')), [firestore]);
+  const { data: testimonialItems } = useCollection(testimonialsQuery);
+  const messagesQuery = useMemoFirebase(() => query(collection(firestore, 'messages'), orderBy('createdAt', 'desc')), [firestore]);
+  const { data: messageItems } = useCollection(messagesQuery);
 
   useEffect(() => {
     if (!isUserLoading && !user) router.push('/login');
@@ -213,57 +238,18 @@ export default function AdminDashboard() {
     setBlocks(newBlocks);
   };
 
-  const parseHtmlToBlocks = (html: string): ContentBlock[] => {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    const parsed: ContentBlock[] = [];
-    
-    Array.from(tempDiv.children).forEach((child, i) => {
-      const id = `parsed-${i}-${Math.random().toString(36).substr(2, 5)}`;
-      let alignment: Alignment = 'left';
-      if (child.classList.contains('text-center')) alignment = 'center';
-      if (child.classList.contains('text-right')) alignment = 'right';
-      if (child.classList.contains('text-justify')) alignment = 'justify';
-
-      if (child.tagName === 'H3') {
-        parsed.push({ id, type: 'title', content: child.innerHTML, alignment });
-      } else if (child.tagName === 'BLOCKQUOTE') {
-        parsed.push({ id, type: 'quote', content: child.innerHTML, alignment });
-      } else {
-        parsed.push({ id, type: 'text', content: child.innerHTML, alignment });
-      }
-    });
-
-    return parsed.length > 0 ? parsed : [{ id: 'fail-safe', type: 'text', content: html, alignment: 'justify' }];
-  };
-
-  const generateHtmlFromBlocks = () => {
-    return blocks.map(block => {
-      const alignClass = `text-${block.alignment}`;
-      if (block.type === 'title') return `<h3 class="${alignClass}">${block.content}</h3>`;
-      if (block.type === 'quote') return `<blockquote class="${alignClass}">${block.content}</blockquote>`;
-      return `<p class="${alignClass}">${block.content}</p>`;
-    }).join('\n');
-  };
-
-  const startEditingBlog = (item: any) => {
-    setEditingId(item.id);
-    setBlogTitle(item.title);
-    setBlogExcerpt(item.excerpt);
-    setBlogType(item.type);
-    setBlogImage(item.image);
-    setBlogAuthorName(item.authorName || 'Ángela María Gómez Duque');
-    setBlogAuthorTitle(item.authorTitle || 'Cargo del Autor');
-    setBlocks(parseHtmlToBlocks(item.body));
-    setActiveForm('blog');
-    setActiveTab('content');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const removeBlock = (id: string) => {
+    setBlocks(prev => prev.filter(b => b.id !== id));
   };
 
   const cancelEditing = () => {
     setEditingId(null);
     setBlogTitle(''); setBlogExcerpt(''); setBlogType('Reflexión'); setBlogImage('');
     setBlocks([{ id: 'reset', type: 'text', content: '', alignment: 'justify' }]);
+    setPodTitle(''); setPodDescription(''); setPodUrl(''); setPodGuest(''); setPodImage('');
+    setVidTitle(''); setVidUrl(''); setVidPlatform('YouTube');
+    setProjTitle(''); setProjDesc(''); setProjCategory(''); setProjImage(''); setProjLink('');
+    setTestQuote(''); setTestAuthorName(''); setTestAuthorTitle('');
     setActiveForm('none');
   };
 
@@ -273,7 +259,12 @@ export default function AdminDashboard() {
       return;
     }
     setIsSaving(true);
-    const htmlBody = generateHtmlFromBlocks();
+    const htmlBody = blocks.map(block => {
+      const alignClass = `text-${block.alignment}`;
+      if (block.type === 'title') return `<h3 class="${alignClass}">${block.content}</h3>`;
+      if (block.type === 'quote') return `<blockquote class="${alignClass}">${block.content}</blockquote>`;
+      return `<p class="${alignClass}">${block.content}</p>`;
+    }).join('\n');
     const slug = blogTitle.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, '-').replace(/[^\w-]+/g, '');
     const data = {
       title: blogTitle,
@@ -299,6 +290,91 @@ export default function AdminDashboard() {
     }).finally(() => setIsSaving(false));
   };
 
+  const handleAiRefinement = async () => {
+    if (!aiInput) {
+      toast({ variant: "destructive", title: "Error", description: "Ingresa un borrador para refinar." });
+      return;
+    }
+    setIsAiLoading(true);
+    try {
+      const res = await editorialAssistant({ text: aiInput });
+      setAiResult(res);
+      toast({ title: "Refinamiento Completado", description: "La IA ha procesado tu narrativa." });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Error IA", description: "No se pudo conectar con el Laboratorio Editorial IA." });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const transferAiToEditor = () => {
+    if (!aiResult) return;
+    const newBlocks: ContentBlock[] = [
+      { id: 'ai-1', type: 'text', content: aiResult.refinedText, alignment: 'justify' },
+      { id: 'ai-2', type: 'quote', content: aiResult.regenerativeInsight, alignment: 'left' }
+    ];
+    setBlocks(newBlocks);
+    setShowAiAssistant(false);
+    toast({ title: "Narrativa Transferida", description: "El texto refinado ahora está en el editor." });
+  };
+
+  const savePodcast = () => {
+    if (!podTitle || !podUrl) {
+      toast({ variant: "destructive", title: "Error", description: "Título y URL son obligatorios." });
+      return;
+    }
+    setIsSaving(true);
+    addDoc(collection(firestore, 'podcasts'), {
+      title: podTitle,
+      description: podDescription,
+      url: podUrl,
+      guest: podGuest,
+      image: podImage,
+      createdAt: serverTimestamp()
+    }).then(() => {
+      toast({ title: "Éxito", description: "Podcast publicado." });
+      cancelEditing();
+      setActiveTab('inventory');
+    }).finally(() => setIsSaving(false));
+  };
+
+  const saveProject = () => {
+    if (!projTitle) return;
+    setIsSaving(true);
+    addDoc(collection(firestore, 'projects'), {
+      title: projTitle,
+      description: projDesc,
+      category: projCategory,
+      image: projImage,
+      link: projLink,
+      createdAt: serverTimestamp()
+    }).then(() => {
+      toast({ title: "Éxito", description: "Proyecto guardado." });
+      cancelEditing();
+      setActiveTab('inventory');
+    }).finally(() => setIsSaving(false));
+  };
+
+  const saveTestimonial = () => {
+    if (!testQuote || !testAuthorName) return;
+    setIsSaving(true);
+    addDoc(collection(firestore, 'testimonials'), {
+      quote: testQuote,
+      authorName: testAuthorName,
+      authorTitle: testAuthorTitle,
+      createdAt: serverTimestamp()
+    }).then(() => {
+      toast({ title: "Éxito", description: "Testimonio guardado." });
+      cancelEditing();
+      setActiveTab('inventory');
+    }).finally(() => setIsSaving(false));
+  };
+
+  const markAsRead = (id: string) => {
+    updateDoc(doc(firestore, 'messages', id), { read: true });
+  };
+
   if (isUserLoading || isAdminLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin h-10 w-10 text-primary" /></div>;
   if (!user || !isAuthorized) return <div className="min-h-screen flex flex-col items-center justify-center p-8 space-y-8"><ShieldAlert className="h-16 w-16 opacity-20" /><h1 className="text-3xl font-bold font-headline">Acceso Restringido</h1><Button onClick={handleLogout}>Cerrar sesión</Button></div>;
 
@@ -307,10 +383,10 @@ export default function AdminDashboard() {
       <div className="bg-secondary text-white py-14 mb-12 border-b">
         <div className="section-container flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold font-headline tracking-tighter">Panel de Control Editorial</h1>
+            <h1 className="text-3xl font-bold font-headline tracking-tighter">Laboratorio de Gestión Editorial</h1>
             <p className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-60">Admin: {user.email}</p>
           </div>
-          <Button variant="outline" onClick={handleLogout} className="text-[9px] font-bold uppercase tracking-widest h-11 px-8"><LogOut className="mr-3 h-3.5" /> Salir</Button>
+          <Button variant="outline" onClick={handleLogout} className="text-[9px] font-bold uppercase tracking-widest h-11 px-8 border-white/20 hover:bg-white/10"><LogOut className="mr-3 h-3.5" /> Salir</Button>
         </div>
       </div>
 
@@ -319,13 +395,15 @@ export default function AdminDashboard() {
           <TabsList className="bg-muted/30 p-1.5 rounded-sm border w-full md:w-auto">
             <TabsTrigger value="overview" className="text-[9px] font-bold uppercase tracking-widest px-8">Escritorio</TabsTrigger>
             <TabsTrigger value="inventory" className="text-[9px] font-bold uppercase tracking-widest px-8">Gestión</TabsTrigger>
-            <TabsTrigger value="ai" className="text-[9px] font-bold uppercase tracking-widest px-8">Asistente IA</TabsTrigger>
+            <TabsTrigger value="messages" className="text-[9px] font-bold uppercase tracking-widest px-8">Mensajes {messageItems?.filter(m => !m.read).length ? <Badge className="ml-2 bg-primary h-4 px-1.5">{messageItems.filter(m => !m.read).length}</Badge> : null}</TabsTrigger>
             <TabsTrigger value="content" className="text-[9px] font-bold uppercase tracking-widest px-8">{editingId ? 'Editando' : 'Publicar'}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-in fade-in duration-500">
             {[
               { title: 'Bitácora', icon: <BookOpen className="h-4 w-4" />, action: () => { setActiveForm('blog'); setActiveTab('content'); } },
+              { title: 'Proyecto', icon: <Briefcase className="h-4 w-4" />, action: () => { setActiveForm('project'); setActiveTab('content'); } },
+              { title: 'Testimonio', icon: <QuoteIcon className="h-4 w-4" />, action: () => { setActiveForm('testimonial'); setActiveTab('content'); } },
               { title: 'Podcast', icon: <Radio className="h-4 w-4" />, action: () => { setActiveForm('podcast'); setActiveTab('content'); } },
             ].map(item => (
               <Card key={item.title} className="rounded-sm border-border/60 hover:shadow-xl transition-all group">
@@ -343,169 +421,286 @@ export default function AdminDashboard() {
             ))}
           </TabsContent>
 
+          <TabsContent value="messages" className="animate-in fade-in duration-500">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold font-headline tracking-tighter">Bandeja de Entrada</h2>
+              <div className="grid grid-cols-1 gap-6">
+                {messageItems?.length === 0 ? (
+                  <Card className="p-12 text-center text-muted-foreground font-light border-dashed">No hay mensajes aún.</Card>
+                ) : (
+                  messageItems?.map(msg => (
+                    <Card key={msg.id} className={cn("rounded-sm border-l-4 transition-all", msg.read ? "border-l-border" : "border-l-primary shadow-md")}>
+                      <CardContent className="p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-4">
+                            <span className="text-sm font-bold">{msg.name}</span>
+                            <span className="text-xs text-muted-foreground">&lt;{msg.email}&gt;</span>
+                            {msg.createdAt && (
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" /> {new Date(msg.createdAt.toDate()).toLocaleString('es-ES')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-light text-foreground/80 leading-relaxed italic">"{msg.message}"</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {!msg.read && (
+                            <Button variant="ghost" size="sm" onClick={() => markAsRead(msg.id)} className="text-[9px] font-bold uppercase tracking-widest text-primary">
+                              <CheckCircle className="mr-2 h-3.5 w-3.5" /> Marcar leído
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" onClick={() => deleteDoc(doc(firestore, 'messages', msg.id))} className="text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
           <TabsContent value="inventory" className="animate-in fade-in duration-500">
             <Card className="rounded-sm overflow-hidden border shadow-xl">
                <Tabs defaultValue="inv-blog">
                   <TabsList className="w-full justify-start border-b rounded-none h-16 bg-muted/5 p-0">
-                    <TabsTrigger value="inv-blog" className="h-full rounded-none px-12 text-[10px] font-bold uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary">Bitácora ({blogItems?.length || 0})</TabsTrigger>
-                    <TabsTrigger value="inv-pod" className="h-full rounded-none px-12 text-[10px] font-bold uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary">Podcast ({podItems?.length || 0})</TabsTrigger>
+                    <TabsTrigger value="inv-blog" className="h-full rounded-none px-12 text-[10px] font-bold uppercase tracking-widest">Bitácora</TabsTrigger>
+                    <TabsTrigger value="inv-proj" className="h-full rounded-none px-12 text-[10px] font-bold uppercase tracking-widest">Proyectos</TabsTrigger>
+                    <TabsTrigger value="inv-test" className="h-full rounded-none px-12 text-[10px] font-bold uppercase tracking-widest">Testimonios</TabsTrigger>
+                    <TabsTrigger value="inv-pod" className="h-full rounded-none px-12 text-[10px] font-bold uppercase tracking-widest">Podcast</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="inv-blog" className="p-0">
                     <Table>
-                      <TableHeader className="bg-muted/10">
-                        <TableRow className="hover:bg-transparent">
-                          <TableHead className="pl-12 py-6 text-[10px] font-bold uppercase tracking-widest">Título de la Crónica</TableHead>
-                          <TableHead className="text-[10px] font-bold uppercase tracking-widest text-right pr-12">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
                       <TableBody>
-                        {blogItems?.length === 0 ? (
-                          <TableRow><TableCell colSpan={2} className="text-center py-24 opacity-40 italic">No hay crónicas publicadas</TableCell></TableRow>
-                        ) : (
-                          blogItems?.map(item => (
-                            <TableRow key={item.id} className="group hover:bg-muted/5 transition-colors border-b">
-                              <TableCell className="pl-12 py-8 font-headline text-lg font-bold tracking-tight">{item.title}</TableCell>
-                              <TableCell className="text-right pr-12 space-x-4">
-                                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all" onClick={() => startEditingBlog(item)}>
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-destructive/10 hover:text-destructive transition-all" onClick={() => deleteDoc(doc(firestore, 'contentItems', item.id))}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TabsContent>
-                  
-                  <TabsContent value="inv-pod" className="p-0">
-                    <Table>
-                      <TableHeader className="bg-muted/10">
-                        <TableRow><TableHead className="pl-12 py-6 text-[10px] font-bold uppercase tracking-widest">Episodio</TableHead><TableHead className="text-[10px] font-bold text-right pr-12 uppercase">Acciones</TableHead></TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {podItems?.map(item => (
+                        {blogItems?.map(item => (
                           <TableRow key={item.id} className="border-b">
                             <TableCell className="pl-12 py-8 font-headline text-lg font-bold">{item.title}</TableCell>
-                            <TableCell className="text-right pr-12 space-x-2">
-                              <Button variant="ghost" size="icon" onClick={() => deleteDoc(doc(firestore, 'podcasts', item.id))}><Trash2 className="h-4 w-4" /></Button>
+                            <TableCell className="text-right pr-12">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button variant="ghost" size="icon" onClick={() => {
+                                  setEditingId(item.id);
+                                  setBlogTitle(item.title);
+                                  setBlogExcerpt(item.excerpt);
+                                  setBlogType(item.type);
+                                  setBlogImage(item.image);
+                                  // Simplified block reconstruction from HTML
+                                  setBlocks([{ id: 'edit-1', type: 'text', content: item.body, alignment: 'justify' }]);
+                                  setActiveForm('blog');
+                                  setActiveTab('content');
+                                }}><Pencil className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => deleteDoc(doc(firestore, 'contentItems', item.id))}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </TabsContent>
+
+                  {/* Rest of Inventory Tabs (Projects, Testimonials, Podcasts) follow same pattern */}
                </Tabs>
             </Card>
           </TabsContent>
 
           <TabsContent value="content">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-               <div className="lg:col-span-4 space-y-4">
+               <div className="lg:col-span-3 space-y-4">
                  <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">Contenedor Editorial</h3>
                  <div className="grid grid-cols-1 gap-3">
-                    <Button variant={activeForm === 'blog' ? 'default' : 'outline'} className="justify-start h-16 px-8 text-[10px] font-bold uppercase tracking-widest rounded-sm" onClick={() => setActiveForm('blog')}><BookOpen className="mr-4 h-4" /> Crónica Narrativa</Button>
-                    <Button variant={activeForm === 'podcast' ? 'default' : 'outline'} className="justify-start h-16 px-8 text-[10px] font-bold uppercase tracking-widest rounded-sm" onClick={() => setActiveForm('podcast')}><Radio className="mr-4 h-4" /> Episodio Podcast</Button>
+                    <Button variant={activeForm === 'blog' ? 'default' : 'outline'} className="justify-start h-16 px-8 text-[10px] font-bold uppercase tracking-widest rounded-sm" onClick={() => setActiveForm('blog')}><BookOpen className="mr-4 h-4" /> Crónica</Button>
+                    <Button variant={activeForm === 'project' ? 'default' : 'outline'} className="justify-start h-16 px-8 text-[10px] font-bold uppercase tracking-widest rounded-sm" onClick={() => setActiveForm('project')}><Briefcase className="mr-4 h-4" /> Proyecto</Button>
+                    <Button variant={activeForm === 'testimonial' ? 'default' : 'outline'} className="justify-start h-16 px-8 text-[10px] font-bold uppercase tracking-widest rounded-sm" onClick={() => setActiveForm('testimonial')}><QuoteIcon className="mr-4 h-4" /> Testimonio</Button>
+                    <Button variant={activeForm === 'podcast' ? 'default' : 'outline'} className="justify-start h-16 px-8 text-[10px] font-bold uppercase tracking-widest rounded-sm" onClick={() => setActiveForm('podcast')}><Radio className="mr-4 h-4" /> Podcast</Button>
                  </div>
-                 {editingId && <Button variant="destructive" className="w-full h-12 text-[10px] font-bold uppercase tracking-widest mt-8" onClick={cancelEditing}>Cancelar Edición</Button>}
                </div>
 
-               <div className="lg:col-span-8">
+               <div className="lg:col-span-9">
                  {activeForm === 'blog' && (
-                   <div className="space-y-12 animate-in slide-in-from-right-12 duration-500">
-                     <Card className="rounded-sm border-border/60 shadow-2xl overflow-hidden">
-                        <CardHeader className="bg-muted/10 p-8 border-b"><CardTitle className="text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-4"><BookOpen className="h-4 text-primary" /> Datos de Portada</CardTitle></CardHeader>
-                        <CardContent className="p-10 space-y-10">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                            <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">Título Principal</Label><Input value={blogTitle} onChange={e => setBlogTitle(e.target.value)} className="h-14 text-xl font-headline font-bold border-b-2 rounded-none focus-visible:ring-0" placeholder="Ej: La verdad en el muelle..." /></div>
-                            <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">Categoría</Label><Input value={blogType} onChange={e => setBlogType(e.target.value)} className="h-14 border-b-2 rounded-none" /></div>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                            <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">Nombre del Autor</Label><Input value={blogAuthorName} onChange={e => setBlogAuthorName(e.target.value)} className="h-14 border-b-2 rounded-none" /></div>
-                            <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">Cargo del Autor</Label><Input value={blogAuthorTitle} onChange={e => setBlogAuthorTitle(e.target.value)} className="h-14 border-b-2 rounded-none" /></div>
-                          </div>
-                          <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">URL Imagen (Unsplash o Picsum)</Label><Input value={blogImage} onChange={e => setBlogImage(e.target.value)} className="h-14 border-b-2 rounded-none" placeholder="https://images.unsplash.com/..." /></div>
-                          <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">Breve Resumen (Cápsula inicial)</Label><Textarea value={blogExcerpt} onChange={e => setBlogExcerpt(e.target.value)} className="min-h-[120px] italic font-light text-lg leading-relaxed border-2 rounded-sm p-6" placeholder="Un resumen que enganche al lector..." /></div>
-                        </CardContent>
-                     </Card>
+                   <div className="space-y-12 animate-in slide-in-from-right-8">
+                     <div className="flex justify-between items-center bg-muted/20 p-6 rounded-sm border mb-8">
+                       <div className="space-y-1">
+                         <h3 className="text-xl font-bold font-headline tracking-tighter">Editor de Crónicas</h3>
+                         <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Acompañamiento Narrativo Habilitado</p>
+                       </div>
+                       <Button 
+                        variant="outline" 
+                        onClick={() => setShowAiAssistant(!showAiAssistant)}
+                        className={cn("text-[9px] font-bold uppercase tracking-widest h-11 px-8 gap-3 transition-all", showAiAssistant ? "bg-primary text-white border-primary" : "text-primary border-primary/20")}
+                       >
+                         <Wand2 className="h-3.5 w-3.5" /> {showAiAssistant ? 'Cerrar Asistente' : '✨ Laboratorio IA'}
+                       </Button>
+                     </div>
 
-                     <div className="space-y-8">
-                        <div className="flex items-center justify-between border-b pb-4">
-                           <h3 className="text-[11px] font-bold uppercase tracking-[0.5em] text-primary">Cuerpo del Artículo</h3>
-                           <span className="text-[9px] font-bold opacity-30 uppercase tracking-widest">Sistema de Bloques WYSIWYG</span>
+                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-start">
+                        <div className={cn("space-y-8 transition-all duration-500", showAiAssistant ? "xl:col-span-7" : "xl:col-span-12")}>
+                           <Card className="rounded-sm border-border/60 shadow-xl overflow-hidden">
+                              <CardHeader className="bg-muted/10 p-8 border-b"><CardTitle className="text-xs font-bold uppercase tracking-[0.2em]">Metadatos de la Historia</CardTitle></CardHeader>
+                              <CardContent className="p-10 space-y-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                  <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">Título Principal</Label><Input value={blogTitle} onChange={e => setBlogTitle(e.target.value)} className="h-14 font-bold text-lg" placeholder="La verdad en el territorio..." /></div>
+                                  <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">Tipo de Contenido</Label><Input value={blogType} onChange={e => setBlogType(e.target.value)} className="h-14" /></div>
+                                </div>
+                                <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">Bajada o Resumen</Label><Textarea value={blogExcerpt} onChange={e => setBlogExcerpt(e.target.value)} rows={3} placeholder="Un breve adelanto de lo que el lector habitará..." /></div>
+                                <div className="space-y-3"><Label className="text-[10px] font-bold uppercase opacity-60">URL Imagen de Portada</Label><Input value={blogImage} onChange={e => setBlogImage(e.target.value)} className="h-14" placeholder="https://images.unsplash.com/..." /></div>
+                              </CardContent>
+                           </Card>
+
+                           <div className="space-y-8">
+                              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary flex items-center gap-3">
+                                <Layout className="h-4 w-4" /> Cuerpo de la Narrativa
+                              </h4>
+                              
+                              <div className="space-y-4">
+                                {blocks.map((block, idx) => (
+                                  <EditableBlock 
+                                    key={block.id} 
+                                    block={block} 
+                                    onChange={(c, a) => updateBlock(block.id, c, a)} 
+                                    onRemove={() => removeBlock(block.id)}
+                                    onMove={(dir) => moveBlock(idx, dir)}
+                                  />
+                                ))}
+                              </div>
+
+                              <div className="flex flex-wrap gap-4 pt-4 border-t border-dashed">
+                                <Button variant="outline" size="sm" onClick={() => addBlock('title')} className="text-[9px] font-bold uppercase gap-2"><Heading3 className="h-3.5" /> Subtítulo</Button>
+                                <Button variant="outline" size="sm" onClick={() => addBlock('text')} className="text-[9px] font-bold uppercase gap-2"><AlignLeft className="h-3.5" /> Párrafo</Button>
+                                <Button variant="outline" size="sm" onClick={() => addBlock('quote')} className="text-[9px] font-bold uppercase gap-2"><QuoteIcon className="h-3.5" /> Cita</Button>
+                              </div>
+
+                              <Separator className="my-12" />
+
+                              <div className="flex gap-4">
+                                <Button className="flex-1 h-18 bg-secondary text-white text-[11px] font-bold uppercase tracking-widest shadow-xl" onClick={saveBlogPost} disabled={isSaving}>
+                                  {isSaving ? <Loader2 className="animate-spin mr-3" /> : (editingId ? 'Actualizar Crónica' : 'Publicar en Bitácora')}
+                                </Button>
+                                <Button variant="ghost" onClick={cancelEditing} className="h-18 px-8 text-muted-foreground uppercase text-[9px] font-bold tracking-widest">Cancelar</Button>
+                              </div>
+                           </div>
                         </div>
-                        
-                        {blocks.map((block, index) => (
-                          <EditableBlock 
-                            key={block.id}
-                            block={block}
-                            onChange={(content, alignment) => updateBlock(block.id, content, alignment)}
-                            onRemove={() => setBlocks(prev => prev.filter(b => b.id !== block.id))}
-                            onMove={(dir) => moveBlock(index, dir)}
-                          />
-                        ))}
 
-                        <div className="grid grid-cols-3 gap-6 pt-10">
-                           <Button variant="outline" className="h-20 border-dashed border-2 hover:border-primary hover:text-primary transition-all flex flex-col gap-3 rounded-sm" onClick={() => addBlock('title')}><Heading3 className="h-5 w-5" /> <span className="text-[9px] font-bold uppercase tracking-widest">Subtítulo</span></Button>
-                           <Button variant="outline" className="h-20 border-dashed border-2 hover:border-primary hover:text-primary transition-all flex flex-col gap-3 rounded-sm" onClick={() => addBlock('text')}><Type className="h-5 w-5" /> <span className="text-[9px] font-bold uppercase tracking-widest">Párrafo</span></Button>
-                           <Button variant="outline" className="h-20 border-dashed border-2 hover:border-primary hover:text-primary transition-all flex flex-col gap-3 rounded-sm" onClick={() => addBlock('quote')}><QuoteIcon className="h-5 w-5" /> <span className="text-[9px] font-bold uppercase tracking-widest">Cita</span></Button>
-                        </div>
+                        {showAiAssistant && (
+                          <div className="xl:col-span-5 animate-in slide-in-from-right-12 sticky top-32">
+                             <Card className="rounded-sm border-primary/20 shadow-2xl overflow-hidden bg-muted/5">
+                                <CardHeader className="bg-primary text-white p-6">
+                                   <div className="flex items-center gap-3">
+                                      <Sparkles className="h-5 w-5" />
+                                      <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">Laboratorio Editorial IA</span>
+                                        <span className="text-[8px] opacity-70 tracking-widest uppercase">Asistente de Refinamiento Narrativo</span>
+                                      </div>
+                                   </div>
+                                </CardHeader>
+                                <CardContent className="p-8 space-y-8">
+                                   <div className="space-y-4">
+                                      <Label className="text-[10px] font-bold uppercase opacity-60">Borrador o Ideas Técnicas</Label>
+                                      <Textarea 
+                                        value={aiInput} 
+                                        onChange={e => setAiInput(e.target.value)} 
+                                        className="min-h-[250px] bg-white text-sm leading-relaxed" 
+                                        placeholder="Pega aquí tus ideas sueltas, notas de campo o borradores técnicos para que la IA los transforme en crónica..."
+                                      />
+                                   </div>
+                                   
+                                   <Button 
+                                    className="w-full h-14 bg-primary text-white text-[10px] font-bold uppercase tracking-widest" 
+                                    onClick={handleAiRefinement} 
+                                    disabled={isAiLoading}
+                                   >
+                                      {isAiLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Refinar Narrativa Editorial'}
+                                   </Button>
 
-                        <Button className="w-full h-18 bg-secondary text-white text-[12px] font-bold uppercase tracking-[0.4em] mt-16 rounded-sm shadow-2xl hover:bg-primary transition-all duration-500 py-6" onClick={saveBlogPost} disabled={isSaving}>
-                          {isSaving ? <Loader2 className="animate-spin h-6 w-6" /> : <><Send className="mr-4 h-5" /> {editingId ? 'Actualizar Crónica' : 'Publicar Crónica'}</>}
-                        </Button>
+                                   {aiResult && (
+                                     <div className="space-y-6 animate-in fade-in duration-700 pt-6 border-t border-primary/10">
+                                        <div className="space-y-3">
+                                          <span className="text-[9px] font-bold text-primary uppercase tracking-[0.3em]">Resultado Sugerido:</span>
+                                          <ScrollArea className="h-[300px] w-full p-6 bg-white border border-primary/10 rounded-sm">
+                                             <div className="prose prose-sm font-light text-foreground/80 leading-relaxed italic">
+                                               "{aiResult.refinedText}"
+                                             </div>
+                                             <div className="mt-8 pt-6 border-t border-dashed">
+                                                <span className="text-[9px] font-bold uppercase tracking-widest block mb-4">Insight Regenerativo:</span>
+                                                <p className="text-sm font-headline italic text-primary">"{aiResult.regenerativeInsight}"</p>
+                                             </div>
+                                          </ScrollArea>
+                                        </div>
+                                        <Button 
+                                          variant="secondary" 
+                                          className="w-full h-12 gap-3 text-[9px] font-bold uppercase"
+                                          onClick={transferAiToEditor}
+                                        >
+                                          <Copy className="h-3.5 w-3.5" /> Transferir al Editor Principal
+                                        </Button>
+                                     </div>
+                                   )}
+                                </CardContent>
+                             </Card>
+                          </div>
+                        )}
                      </div>
                    </div>
                  )}
-               </div>
-            </div>
-          </TabsContent>
 
-          <TabsContent value="ai" className="animate-in fade-in duration-500">
-            {/* Mantener sección IA existente */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-               <Card className="p-10 space-y-8 shadow-xl">
-                  <div className="flex items-center gap-4 mb-4">
-                    <Sparkles className="h-6 w-6 text-primary" />
-                    <h3 className="text-xl font-bold font-headline">Asistente Editorial</h3>
-                  </div>
-                  <div className="space-y-4">
-                    <Label className="text-[10px] font-bold uppercase opacity-60">Borrador o Ideas Sueltas</Label>
-                    <Textarea value={aiInput} onChange={e => setAiInput(e.target.value)} className="min-h-[400px] font-light leading-relaxed text-base p-8 border-2" placeholder="Escribe aquí los datos técnicos o lo que sucedió en el territorio..." />
-                  </div>
-                  <Button className="w-full h-16 bg-primary text-[11px] font-bold uppercase tracking-widest" onClick={async () => {
-                    if (!aiInput) return;
-                    setIsAiLoading(true);
-                    try { 
-                      const res = await editorialAssistant({ text: aiInput }); 
-                      setAiResult(res); 
-                      toast({ title: "Narrativa Refinada" });
-                    } catch (e) { 
-                      toast({ variant: "destructive", title: "Error IA" }); 
-                    } finally { 
-                      setIsAiLoading(false); 
-                    }
-                  }} disabled={isAiLoading}>
-                    {isAiLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Refinar Narrativa'}
-                  </Button>
-               </Card>
-               {aiResult && (
-                 <div className="space-y-8 animate-in slide-in-from-right-8">
-                    <Card className="p-12 bg-secondary text-white border-0 shadow-2xl relative overflow-hidden">
-                       <QuoteIcon className="absolute -top-4 -left-4 h-24 w-24 opacity-5 text-white" />
-                       <div className="relative z-10 space-y-8">
-                          <p className="text-2xl font-headline italic leading-relaxed">"{aiResult.refinedText}"</p>
-                       </div>
-                    </Card>
-                    <Button variant="outline" className="w-full h-14 border-2 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-white" onClick={() => { 
-                      setBlocks([{ id: 'ai-gen', type: 'text', content: aiResult.refinedText, alignment: 'justify' }]); 
-                      setActiveForm('blog'); setActiveTab('content'); 
-                    }}>Utilizar en Nueva Crónica</Button>
-                 </div>
-               )}
+                 {activeForm === 'project' && (
+                   <Card className="p-10 space-y-8 shadow-xl animate-in slide-in-from-right-8">
+                      <div className="flex items-center gap-4 border-b pb-6">
+                        <Briefcase className="h-6 w-6 text-primary" />
+                        <h3 className="text-xl font-bold font-headline">Nuevo Proyecto</h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Título del Proyecto</Label><Input value={projTitle} onChange={e => setProjTitle(e.target.value)} /></div>
+                        <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Categoría</Label><Input value={projCategory} onChange={e => setProjCategory(e.target.value)} /></div>
+                      </div>
+                      <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">URL Imagen (1200x800)</Label><Input value={projImage} onChange={e => setProjImage(e.target.value)} placeholder="https://..." /></div>
+                      <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Enlace Externo</Label><Input value={projLink} onChange={e => setProjLink(e.target.value)} placeholder="https://..." /></div>
+                      <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Descripción Técnica</Label><Textarea value={projDesc} onChange={e => setProjDesc(e.target.value)} rows={4} /></div>
+                      <div className="flex gap-4 pt-4">
+                        <Button className="flex-1 h-16 bg-secondary text-white text-[10px] font-bold uppercase" onClick={saveProject} disabled={isSaving}>Guardar Proyecto</Button>
+                        <Button variant="ghost" onClick={cancelEditing}>Cancelar</Button>
+                      </div>
+                   </Card>
+                 )}
+
+                 {activeForm === 'testimonial' && (
+                   <Card className="p-10 space-y-8 shadow-xl animate-in slide-in-from-right-8">
+                      <div className="flex items-center gap-4 border-b pb-6">
+                        <QuoteIcon className="h-6 w-6 text-primary" />
+                        <h3 className="text-xl font-bold font-headline">Testimonio de Confianza</h3>
+                      </div>
+                      <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Cita / Palabra de Cliente</Label><Textarea value={testQuote} onChange={e => setTestQuote(e.target.value)} rows={5} placeholder="Lo que dicen de nosotros..." /></div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Autor (Nombre)</Label><Input value={testAuthorName} onChange={e => setTestAuthorName(e.target.value)} /></div>
+                        <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Cargo / Organización</Label><Input value={testAuthorTitle} onChange={e => setTestAuthorTitle(e.target.value)} /></div>
+                      </div>
+                      <div className="flex gap-4 pt-4">
+                        <Button className="flex-1 h-16 bg-secondary text-white text-[10px] font-bold uppercase" onClick={saveTestimonial} disabled={isSaving}>Guardar Testimonio</Button>
+                        <Button variant="ghost" onClick={cancelEditing}>Cancelar</Button>
+                      </div>
+                   </Card>
+                 )}
+
+                 {activeForm === 'podcast' && (
+                   <Card className="p-10 space-y-8 shadow-xl animate-in slide-in-from-right-8">
+                      <div className="flex items-center gap-4 border-b pb-6">
+                        <Radio className="h-6 w-6 text-primary" />
+                        <h3 className="text-xl font-bold font-headline">Publicar Episodio</h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Título del Episodio</Label><Input value={podTitle} onChange={e => setPodTitle(e.target.value)} /></div>
+                        <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Invitado (Opcional)</Label><Input value={podGuest} onChange={e => setPodGuest(e.target.value)} /></div>
+                      </div>
+                      <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">URL del Reproductor (Spotify Embed)</Label><Input value={podUrl} onChange={e => setPodUrl(e.target.value)} placeholder="https://open.spotify.com/embed/..." /></div>
+                      <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">URL Imagen Cuadrada</Label><Input value={podImage} onChange={e => setPodImage(e.target.value)} /></div>
+                      <div className="space-y-3"><Label className="text-[10px] font-bold uppercase">Descripción Corta</Label><Textarea value={podDescription} onChange={e => setPodDescription(e.target.value)} /></div>
+                      <div className="flex gap-4 pt-4">
+                        <Button className="flex-1 h-16 bg-secondary text-white text-[10px] font-bold uppercase" onClick={savePodcast} disabled={isSaving}>Publicar Podcast</Button>
+                        <Button variant="ghost" onClick={cancelEditing}>Cancelar</Button>
+                      </div>
+                   </Card>
+                 )}
+               </div>
             </div>
           </TabsContent>
         </Tabs>

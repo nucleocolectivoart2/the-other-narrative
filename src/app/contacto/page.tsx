@@ -1,21 +1,62 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Linkedin, Send, ArrowLeft } from 'lucide-react';
+import { Mail, Linkedin, Send, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useFirestore } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ContactPage() {
   const image = PlaceHolderImages.find(img => img.id === 'contacto-bg');
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+
   const phoneNumber = "573162809797";
-  const message = encodeURIComponent("Hola Ángela, vi tu bitácora y me gustaría conversar sobre sostenibilidad y comunicación.");
-  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+  const waMessage = encodeURIComponent("Hola Ángela, vi tu bitácora y me gustaría conversar sobre sostenibilidad y comunicación.");
+  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${waMessage}`;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.message) {
+      toast({ variant: "destructive", title: "Error", description: "Todos los campos son obligatorios." });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      addDocumentNonBlocking(collection(firestore, 'messages'), {
+        ...formData,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+      
+      setIsSubmitted(true);
+      toast({ title: "Mensaje enviado", description: "Gracias por contactarnos. Te responderemos pronto." });
+      setFormData({ name: '', email: '', message: '' });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "No se pudo enviar el mensaje." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="bg-background min-h-screen">
@@ -84,25 +125,63 @@ export default function ContactPage() {
           </div>
 
           <div className="lg:col-span-7">
-            <form className="bg-white p-12 border border-border/50 rounded-sm space-y-10 shadow-xl animate-in slide-in-from-right-12 duration-1000">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-3">
-                  <Label htmlFor="nombre" className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Nombre</Label>
-                  <Input id="nombre" placeholder="Tu nombre..." className="rounded-sm border-border h-12 bg-background/30 focus:bg-white transition-all text-sm" required />
+            {isSubmitted ? (
+              <div className="bg-white p-24 border border-border/50 rounded-sm text-center space-y-8 shadow-xl animate-in zoom-in duration-700">
+                <CheckCircle2 className="h-16 w-16 text-primary mx-auto" />
+                <h3 className="text-3xl font-bold font-headline tracking-tighter">Mensaje Enviado</h3>
+                <p className="text-foreground/60 font-light leading-relaxed">
+                  Gracias por iniciar esta conversación. Estaremos en contacto pronto para habitar juntos la verdad de tu organización.
+                </p>
+                <Button variant="outline" onClick={() => setIsSubmitted(false)} className="btn-editorial h-12">Enviar otro mensaje</Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="bg-white p-12 border border-border/50 rounded-sm space-y-10 shadow-xl animate-in slide-in-from-right-12 duration-1000">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-3">
+                    <Label htmlFor="nombre" className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Nombre</Label>
+                    <Input 
+                      id="nombre" 
+                      value={formData.name}
+                      onChange={e => setFormData({...formData, name: e.target.value})}
+                      placeholder="Tu nombre..." 
+                      className="rounded-sm border-border h-12 bg-background/30 focus:bg-white transition-all text-sm" 
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Email</Label>
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      value={formData.email}
+                      onChange={e => setFormData({...formData, email: e.target.value})}
+                      placeholder="ejemplo@dominio.com" 
+                      className="rounded-sm border-border h-12 bg-background/30 focus:bg-white transition-all text-sm" 
+                      required 
+                    />
+                  </div>
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Email</Label>
-                  <Input id="email" type="email" placeholder="ejemplo@dominio.com" className="rounded-sm border-border h-12 bg-background/30 focus:bg-white transition-all text-sm" required />
+                  <Label htmlFor="mensaje" className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Mensaje</Label>
+                  <Textarea 
+                    id="mensaje" 
+                    value={formData.message}
+                    onChange={e => setFormData({...formData, message: e.target.value})}
+                    placeholder="¿Cómo puedo ayudarte?" 
+                    rows={6} 
+                    className="rounded-sm border-border bg-background/30 focus:bg-white transition-all resize-none text-sm" 
+                    required 
+                  />
                 </div>
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="mensaje" className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Mensaje</Label>
-                <Textarea id="mensaje" placeholder="¿Cómo puedo ayudarte?" rows={6} className="rounded-sm border-border bg-background/30 focus:bg-white transition-all resize-none text-sm" required />
-              </div>
-              <Button className="btn-editorial btn-editorial-primary w-full h-12 bg-secondary text-white hover:bg-primary border-0 rounded-sm">
-                Enviar Mensaje <Send className="ml-4 h-4 w-4" />
-              </Button>
-            </form>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="btn-editorial btn-editorial-primary w-full h-12 bg-secondary text-white hover:bg-primary border-0 rounded-sm"
+                >
+                  {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : <>Enviar Mensaje <Send className="ml-4 h-4 w-4" /></>}
+                </Button>
+              </form>
+            )}
           </div>
         </div>
 

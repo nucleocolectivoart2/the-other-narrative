@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -18,18 +17,17 @@ import {
 const navLinks = [
   { name: 'Mirada', href: '/conciencia' },
   { name: 'Áreas', href: '/experiencia' },
-  { name: 'Proceso', href: '/accion' },
+  { name: 'Proyectos', href: '/proyectos' },
   { name: 'Insights', href: '/blog' },
+  { name: 'Multimedia', href: '/multimedia' },
   { name: 'Contacto', href: '/contacto' },
 ];
 
 const themes: { name: string; value: Theme; color: string }[] = [
   { name: 'Editorial', value: 'editorial', color: 'bg-[#C05A3B]' },
   { name: 'Digital', value: 'digital', color: 'bg-[#B7DA2D]' },
-  { name: 'Tierra', value: 'earth', color: 'bg-[#2D5A27]' },
-  { name: 'Océano', value: 'ocean', color: 'bg-[#006699]' },
+  { name: 'Celeste', value: 'ocean', color: 'bg-[#00BFFF]' },
   { name: 'Aurea', value: 'gold', color: 'bg-[#D4AF37]' },
-  { name: 'Minimal', value: 'minimal', color: 'bg-black' },
 ];
 
 export function Navbar() {
@@ -56,23 +54,23 @@ export function Navbar() {
   return (
     <>
       <header className={cn(
-        "fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ease-in-out px-6 md:px-12",
+        "fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ease-in-out px-4 sm:px-6 md:px-12",
         scrolled 
           ? "bg-background/95 backdrop-blur-md border-b py-3 shadow-sm" 
-          : "bg-transparent py-6"
+          : "bg-transparent py-4 sm:py-6"
       )}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link 
             href="/" 
             className={cn(
-              "text-lg font-bold font-headline tracking-tighter lowercase z-[70] transition-colors duration-500",
-              scrolled ? "text-foreground" : "text-white"
+              "text-base sm:text-lg font-bold font-headline tracking-tighter lowercase z-[70] transition-colors duration-500",
+              scrolled || isOpen ? "text-foreground" : "text-white"
             )}
           >
             the other narrative.
           </Link>
           
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-2 sm:space-x-8">
             <nav className="hidden lg:block">
               <ul className="flex items-center space-x-10">
                 {navLinks.map((link) => (
@@ -96,7 +94,7 @@ export function Navbar() {
                 <button
                   className={cn(
                     "p-2 rounded-full transition-all duration-500 hover:bg-primary/10 group focus:outline-none",
-                    scrolled ? "text-foreground/60" : "text-white/80"
+                    scrolled || isOpen ? "text-foreground/60" : "text-white/80"
                   )}
                   title="Cambiar paleta cromática"
                 >
@@ -150,10 +148,10 @@ export function Navbar() {
 
       {/* Fullscreen Menu Overlay */}
       <div className={cn(
-        "fixed inset-0 z-[55] bg-background transition-all duration-700 ease-in-out flex flex-col items-center justify-center",
+        "fixed inset-0 z-[55] bg-background transition-all duration-700 ease-in-out flex flex-col items-center justify-center overflow-y-auto px-6 py-20",
         isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
       )}>
-        <nav className="section-container w-full max-w-2xl px-12 text-center">
+        <nav className="w-full max-w-2xl text-center">
           <ul className="flex flex-col items-center gap-6 md:gap-8">
             {navLinks.map((link, i) => (
               <li 
@@ -167,7 +165,7 @@ export function Navbar() {
                 <Link
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="text-3xl md:text-5xl font-bold font-headline tracking-tighter hover:text-primary transition-all duration-500 block"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-headline tracking-tighter hover:text-primary transition-all duration-500 block"
                 >
                   {link.name}
                 </Link>

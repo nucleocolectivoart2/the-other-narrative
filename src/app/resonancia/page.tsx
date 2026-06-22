@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -90,7 +89,7 @@ export default function ResonanciaPage() {
             <ArrowLeft className="mr-4 h-4 w-4 group-hover:-translate-x-1 transition-transform" /> 03 Proceso
           </Link>
           <Link href="/coherencia" className="btn-editorial btn-editorial-primary">
-            05 Formación <ArrowRight className="ml-4 h-4 w-4" />
+            05 Coherencia <ArrowRight className="ml-4 h-4 w-4" />
           </Link>
         </div>
       </div>

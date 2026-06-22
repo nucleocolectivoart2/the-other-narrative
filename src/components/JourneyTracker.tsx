@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -10,6 +9,8 @@ const steps = [
   { id: '01', name: 'Mirada', href: '/conciencia' },
   { id: '02', name: 'Áreas', href: '/experiencia' },
   { id: '03', name: 'Proceso', href: '/accion' },
+  { id: '04', name: 'Resonancia', href: '/resonancia' },
+  { id: '05', name: 'Coherencia', href: '/coherencia' },
 ];
 
 export function JourneyTracker() {

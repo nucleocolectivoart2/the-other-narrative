@@ -38,7 +38,8 @@
         "title": { "type": "string" },
         "guest": { "type": "string" },
         "url": { "type": "string", "format": "uri" },
-        "description": { "type": "string" }
+        "description": { "type": "string" },
+        "image": { "type": "string", "format": "uri" }
       },
       "required": ["id", "title", "url"]
     },
@@ -99,6 +100,20 @@
         "platform": { "type": "string" }
       },
       "required": ["id", "title", "url", "platform"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "type": "object",
+      "description": "Messages sent from the contact form.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "read": { "type": "boolean" }
+      },
+      "required": ["name", "email", "message"]
     }
   },
   "auth": {
@@ -112,6 +127,7 @@
     "/recognitions/{id}": { "schema": "Recognition", "description": "Awards and mentions." },
     "/testimonials/{id}": { "schema": "Testimonial", "description": "Client quotes." },
     "/featuredVideos/{id}": { "schema": "FeaturedVideo", "description": "Curated video content." },
-    "/adminRoles/{userId}": { "schema": "User", "description": "Administrative roles mapping." }
+    "/adminRoles/{userId}": { "schema": "User", "description": "Administrative roles mapping." },
+    "/messages/{id}": { "schema": "ContactMessage", "description": "Messages from users." }
   }
 }

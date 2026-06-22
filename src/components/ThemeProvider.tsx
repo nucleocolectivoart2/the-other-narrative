@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type Theme = 'editorial' | 'digital' | 'earth' | 'ocean' | 'minimal' | 'gold';
+export type Theme = 'editorial' | 'digital' | 'ocean' | 'gold';
 
 interface ThemeContextType {
   theme: Theme;
@@ -23,7 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('theme-editorial', 'theme-digital', 'theme-earth', 'theme-ocean', 'theme-minimal', 'theme-gold');
+    root.classList.remove('theme-editorial', 'theme-digital', 'theme-ocean', 'theme-gold');
     if (theme !== 'editorial') {
       root.classList.add(`theme-${theme}`);
     }

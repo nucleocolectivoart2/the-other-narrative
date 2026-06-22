@@ -1,10 +1,9 @@
-
 "use client";
 
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, Workflow, Leaf } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Leaf, Sparkles } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function AccionPage() {
@@ -42,6 +41,9 @@ export default function AccionPage() {
                 <span className="text-primary font-bold text-[10px] tracking-[0.4em] uppercase">Área 05</span>
               </div>
               <h3 className="text-3xl font-bold font-headline tracking-tighter">Comunicación para la Sostenibilidad</h3>
+              <p className="text-lg font-light text-foreground/70 leading-relaxed italic">
+                Llevamos los compromisos ambientales y sociales al centro de la conversación estratégica, transformando datos en historias de impacto real.
+              </p>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-sm font-light text-foreground/60 leading-relaxed border-l border-primary/20 pl-8">
                 <li>• Narrativas de sostenibilidad</li>
                 <li>• Storytelling de impacto</li>
@@ -54,31 +56,35 @@ export default function AccionPage() {
           </div>
 
           <div className="lg:col-span-5 bg-muted/10 p-12 rounded-sm border border-border/50 h-fit">
-            <Workflow className="h-8 w-8 text-primary mb-8" />
+            <Sparkles className="h-8 w-8 text-primary mb-8" />
             <p className="text-lg font-light text-foreground/70 leading-relaxed italic">
               "No creemos en comunicar por comunicar. Creemos en construir conversaciones que ayuden a tomar mejores decisiones."
             </p>
           </div>
         </div>
 
-        <div className="space-y-12 border-t pt-24">
-           <h3 className="text-3xl font-bold font-headline tracking-tighter">Cómo trabajamos</h3>
+        <div className="space-y-16 border-t pt-24">
+           <div className="space-y-6">
+             <span className="text-primary font-bold text-[10px] tracking-[0.6em] uppercase">METODOLOGÍA</span>
+             <h3 className="text-4xl md:text-5xl font-bold font-headline tracking-tighter">Cómo trabajamos</h3>
+           </div>
+           
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Escuchar</h4>
-                <p className="text-xs font-light text-muted-foreground">Comprender el contexto, los desafíos y las prioridades de la organización.</p>
+              <div className="space-y-4 p-8 border border-border/40 hover:bg-primary/5 transition-all rounded-sm">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary border-b pb-2">01. Escuchar</h4>
+                <p className="text-xs font-light text-muted-foreground leading-relaxed">Comprender el contexto, los desafíos y las prioridades reales de la organización y sus grupos de interés.</p>
               </div>
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Priorizar</h4>
-                <p className="text-xs font-light text-muted-foreground">Identificar los temas que realmente generan valor para la estrategia y los grupos de interés.</p>
+              <div className="space-y-4 p-8 border border-border/40 hover:bg-primary/5 transition-all rounded-sm">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary border-b pb-2">02. Priorizar</h4>
+                <p className="text-xs font-light text-muted-foreground leading-relaxed">Identificar los temas que realmente generan valor estratégico y permiten construir conversaciones honestas.</p>
               </div>
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Diseñar</h4>
-                <p className="text-xs font-light text-muted-foreground">Construir narrativas, herramientas y productos que permitan conectar con las personas.</p>
+              <div className="space-y-4 p-8 border border-border/40 hover:bg-primary/5 transition-all rounded-sm">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary border-b pb-2">03. Diseñar</h4>
+                <p className="text-xs font-light text-muted-foreground leading-relaxed">Construir narrativas, herramientas y productos editoriales de alto valor que permitan conectar emocionalmente.</p>
               </div>
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Movilizar</h4>
-                <p className="text-xs font-light text-muted-foreground">Generar conversaciones, contenidos y procesos que impulsen participación y confianza.</p>
+              <div className="space-y-4 p-8 border border-border/40 hover:bg-primary/5 transition-all rounded-sm">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary border-b pb-2">04. Movilizar</h4>
+                <p className="text-xs font-light text-muted-foreground leading-relaxed">Generar conversaciones, contenidos y procesos de participación que impulsen la confianza y el impacto social.</p>
               </div>
            </div>
         </div>
@@ -87,8 +93,8 @@ export default function AccionPage() {
           <Link href="/experiencia" className="btn-editorial btn-editorial-outline group">
             <ArrowLeft className="mr-4 h-4 w-4 group-hover:-translate-x-1 transition-transform" /> 02 Áreas
           </Link>
-          <Link href="/blog" className="btn-editorial btn-editorial-primary">
-            Insights <ArrowRight className="ml-4 h-4 w-4" />
+          <Link href="/resonancia" className="btn-editorial btn-editorial-primary">
+            04 Resonancia <ArrowRight className="ml-4 h-4 w-4" />
           </Link>
         </div>
       </div>

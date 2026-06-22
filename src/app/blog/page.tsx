@@ -48,7 +48,7 @@ export default function BlogPage() {
 
   return (
     <main className="bg-background min-h-screen">
-      <section className="relative h-[70vh] w-full flex items-end pb-24 overflow-hidden border-b bg-black">
+      <section className="relative h-[60vh] sm:h-[70vh] w-full flex items-end pb-16 sm:pb-24 overflow-hidden border-b bg-black">
         <div className="absolute inset-0 z-0">
           <Image
             src={bannerImage?.imageUrl || 'https://images.pexels.com/photos/1190906/pexels-photo-1190906.jpeg'}
@@ -59,36 +59,36 @@ export default function BlogPage() {
           />
         </div>
         <div className="section-container relative z-10 w-full text-white">
-          <span className="text-primary font-bold tracking-[0.6em] uppercase text-[10px] mb-8 block animate-in slide-in-from-bottom-4 duration-700">
+          <span className="text-primary font-bold tracking-[0.6em] uppercase text-[9px] sm:text-[10px] mb-6 sm:mb-8 block animate-in slide-in-from-bottom-4 duration-700">
             Escrituras Compartidas
           </span>
           <div className="max-w-4xl animate-in slide-in-from-bottom-8 duration-1000 delay-200">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold font-headline leading-[0.9] mb-8 tracking-tighter text-white">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold font-headline leading-[0.9] mb-6 sm:mb-8 tracking-tighter text-white">
               Bitácora <br />
               <span className="italic font-normal text-primary">Abierta.</span>
             </h1>
-            <p className="text-xl md:text-2xl font-light text-white/70 leading-relaxed max-w-2xl">
+            <p className="text-lg sm:text-xl md:text-2xl font-light text-white/70 leading-relaxed max-w-2xl">
               Un espacio para compartir ideas, investigaciones, entrevistas y aprendizajes sobre comunicación, sostenibilidad, liderazgo y construcción de confianza.
             </p>
           </div>
         </div>
       </section>
 
-      <div className="section-container py-24">
+      <div className="section-container py-16 sm:py-24">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-32 space-y-4 opacity-40">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <div className="flex flex-col items-center justify-center py-24 sm:py-32 space-y-4 opacity-40">
+            <Loader2 className="h-8 w-8 sm:h-10 sm:w-10 animate-spin text-primary" />
             <p className="text-[9px] font-bold uppercase tracking-[0.4em]">Sincronizando Historias</p>
           </div>
         ) : (
-          <div className="space-y-24">
+          <div className="space-y-16 sm:space-y-24">
             {articles.length > 0 && (
               <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
                 <ArticleCard article={articles[0]} featured={true} />
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {articles.slice(1).map((article, index) => (
                 <div 
                   key={article.id} 
