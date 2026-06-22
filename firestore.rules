@@ -1,6 +1,7 @@
+
 /**
  * FIREBASE SECURITY RULES - THE OTHER NARRATIVE
- * DEPLOYMENT TRIGGER: V15 - Prioritized Email Authorization
+ * DEPLOYMENT TRIGGER: V16 - Contact Messages Authorization
  */
 
 rules_version = '2';
@@ -49,6 +50,12 @@ service cloud.firestore {
     match /recognitions/{id} { allow read: if allowPublicRead(); allow write: if isAdmin(); }
     match /testimonials/{id} { allow read: if allowPublicRead(); allow write: if isAdmin(); }
     match /featuredVideos/{id} { allow read: if allowPublicRead(); allow write: if isAdmin(); }
+
+    // Mensajes de contacto: Cualquier usuario puede crear, solo admin puede leer/borrar
+    match /messages/{id} {
+      allow create: if true;
+      allow read, delete, update: if isAdmin();
+    }
 
     match /{path=**} {
       allow read, write: if false;
